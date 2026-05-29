@@ -62,6 +62,17 @@ add interface=vlan20 name=vrrp20 priority=200 vrid=20
 add interface=vlan30 name=vrrp30 priority=200 vrid=30
 ```
 
+### Dirección IP virtual
+
+Se configuró una dirección IP virtual para cada VLAN utilizando VRRP. Estas direcciones actúan como gateway para los clientes y permanecen disponibles incluso ante la falla del router principal.
+
+| VLAN | Gateway Virtual |
+|--------|--------|
+| VLAN 10 | 10.10.10.1 |
+| VLAN 20 | 10.10.20.1 |
+| VLAN 30 | 10.10.30.1 |
+
+
 ### Direccionamiento IP
 
 ```routeros
