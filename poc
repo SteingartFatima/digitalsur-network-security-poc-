@@ -1,0 +1,212 @@
+# PoC - VRRP con VLANs en MikroTik utilizando GNS3
+
+## Objetivo
+
+Implementar una prueba de concepto (PoC) de alta disponibilidad utilizando VRRP sobre múltiples VLANs en un entorno GNS3. El objetivo es garantizar la continuidad del gateway ante la caída del router principal.
+
+---
+
+## Topología
+
+La topología implementada está compuesta por:
+
+- Router-firewall-master (Prioridad 200)
+- Router-backup (Prioridad 100)
+- Switch Ethernet de GNS3
+- Cliente1 (VLAN 10)
+- Cliente2 (VLAN 20)
+- Cliente3 (VLAN 30)
+
+![Topología](./capturas/topologia.png)
+
+---
+
+## Configuración del Switch
+
+| Puerto | Dispositivo | VLAN | Tipo |
+|----------|----------|----------|----------|
+| 0 | Router-firewall-master | 1 | dot1q |
+| 1 | Router-backup | 1 | dot1q |
+| 2 | Cliente1 | 10 | access |
+| 3 | Cliente2 | 20 | access |
+| 4 | Cliente3 | 30 | access |
+
+### Configuración aplicada
+
+![Switch VLANs](./capturas/switch-vlans.png)
+
+---
+
+## Configuración del Router Principal
+
+### Bridge
+
+```routeros
+/interface bridge add name=bridge1 vlan-filtering=no
+/interface bridge port add bridge=bridge1 interface=ether1
+```
+
+### VLANs
+
+```routeros
+/interface bridge vlan
+add bridge=bridge1 tagged=bridge1,ether1 vlan-ids=10,20,30
+```
+
+```routeros
+/interface vlan
+add interface=bridge1 name=vlan10 vlan-id=10
+add interface=bridge1 name=vlan20 vlan-id=20
+add interface=bridge1 name=vlan30 vlan-id=30
+```
+
+### VRRP
+
+```routeros
+/interface vrrp
+add interface=vlan10 name=vrrp10 priority=200 vrid=10
+add interface=vlan20 name=vrrp20 priority=200 vrid=20
+add interface=vlan30 name=vrrp30 priority=200 vrid=30
+```
+
+### Direccionamiento IP
+
+```routeros
+/ip address
+add address=10.10.10.2/24 interface=vlan10
+add address=10.10.20.2/24 interface=vlan20
+add address=10.10.30.2/24 interface=vlan30
+
+add address=10.10.10.1/24 interface=vrrp10
+add address=10.10.20.1/24 interface=vrrp20
+add address=10.10.30.1/24 interface=vrrp30
+```
+
+### DHCP
+
+```routeros
+/ip pool
+add name=pool10 ranges=10.10.10.100-10.10.10.200
+add name=pool20 ranges=10.10.20.100-10.10.20.200
+add name=pool30 ranges=10.10.30.100-10.10.30.200
+```
+
+```routeros
+/ip dhcp-server
+add address-pool=pool10 interface=vlan10 name=dhcp10 disabled=no
+add address-pool=pool20 interface=vlan20 name=dhcp20 disabled=no
+add address-pool=pool30 interface=vlan30 name=dhcp30 disabled=no
+```
+
+```routeros
+/ip dhcp-server network
+add address=10.10.10.0/24 gateway=10.10.10.1
+add address=10.10.20.0/24 gateway=10.10.20.1
+add address=10.10.30.0/24 gateway=10.10.30.1
+```
+
+### Activación del filtrado VLAN
+
+```routeros
+/interface bridge set bridge1 vlan-filtering=yes
+```
+
+---
+
+## Evidencia de configuración
+
+### Interfaces creadas
+
+![Interfaces Master](./capturas/master-interface-print.png)
+
+### Direccionamiento IP
+
+![IP Master](./capturas/master-ip-address.png)
+
+### DHCP
+
+![DHCP Master](./capturas/master-dhcp.png)
+
+---
+
+## Router Backup
+
+Se replicó la configuración del router principal modificando:
+
+- Prioridad VRRP = 100
+- IP VLAN10 = 10.10.10.3
+- IP VLAN20 = 10.10.20.3
+- IP VLAN30 = 10.10.30.3
+
+### Estado VRRP
+
+Se observa el indicador **B (Backup)** en las tres interfaces VRRP.
+
+![VRRP Backup](./capturas/backup-vrrp.png)
+
+---
+
+## Validación DHCP
+
+### Cliente1
+
+![Cliente1 DHCP](./capturas/cliente1-dhcp.png)
+
+### Cliente2
+
+![Cliente2 DHCP](./capturas/cliente2-dhcp.png)
+
+### Cliente3
+
+![Cliente3 DHCP](./capturas/cliente3-dhcp.png)
+
+---
+
+## Prueba de Failover
+
+Se ejecutó un ping continuo hacia la IP virtual VRRP:
+
+```bash
+ping 10.10.10.1 -t
+```
+
+Posteriormente se apagó el router principal.
+
+### Resultado
+
+- Se perdieron únicamente 2 paquetes ICMP.
+- El router backup asumió automáticamente el rol de master.
+- La IP virtual continuó respondiendo.
+- Los clientes mantuvieron conectividad sin reconfiguración.
+
+### Evidencia
+
+![Failover VRRP](./capturas/failover-vrrp.png)
+
+---
+
+## Resultados obtenidos
+
+✅ VLAN 10 operativa
+
+✅ VLAN 20 operativa
+
+✅ VLAN 30 operativa
+
+✅ DHCP funcionando en todas las VLANs
+
+✅ VRRP funcionando correctamente
+
+✅ Conmutación automática ante falla del router principal
+
+✅ Alta disponibilidad del gateway mediante IP virtual compartida
+
+---
+
+## Próximos pasos
+
+- Incorporar VLAN WAF.
+- Implementar Ubuntu Docker Guest.
+- Desplegar WAF mediante Docker.
+- Incorporar salida a Internet mediante NAT.
+- Validar acceso a servicios web protegidos.
