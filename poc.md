@@ -1,11 +1,3 @@
-# PoC - VRRP con VLANs en MikroTik utilizando GNS3
-
-## Objetivo
-
-Implementar una prueba de concepto (PoC) de alta disponibilidad utilizando VRRP sobre múltiples VLANs en un entorno GNS3. El objetivo es garantizar la continuidad del gateway ante la caída del router principal.
-
----
-
 ## Topología
 
 La topología implementada está compuesta por:
@@ -17,7 +9,7 @@ La topología implementada está compuesta por:
 - Cliente2 (VLAN 20)
 - Cliente3 (VLAN 30)
 
-![Topología](./capturas/topologia.png)
+<img width="467" height="418" alt="image" src="https://github.com/user-attachments/assets/b286cd26-1faf-46c2-9fca-7095cd8cc7b2" />
 
 ---
 
@@ -33,7 +25,8 @@ La topología implementada está compuesta por:
 
 ### Configuración aplicada
 
-![Switch VLANs](./capturas/switch-vlans.png)
+<img width="691" height="488" alt="image" src="https://github.com/user-attachments/assets/24527a27-9d79-4993-b070-fa161babce75" />
+
 
 ---
 
@@ -117,15 +110,18 @@ add address=10.10.30.0/24 gateway=10.10.30.1
 
 ### Interfaces creadas
 
-![Interfaces Master](./capturas/master-interface-print.png)
+<img width="733" height="489" alt="image" src="https://github.com/user-attachments/assets/d0008457-a21d-492f-892c-4ac0f7c42f54" />
+
 
 ### Direccionamiento IP
 
-![IP Master](./capturas/master-ip-address.png)
+<img width="483" height="237" alt="image" src="https://github.com/user-attachments/assets/e4a2bffe-b65b-4d5b-ad24-4ba41e60a6a4" />
+
 
 ### DHCP
 
-![DHCP Master](./capturas/master-dhcp.png)
+<img width="537" height="165" alt="image" src="https://github.com/user-attachments/assets/173dcdcf-1cfa-402d-8e43-22a48398ff1e" />
+
 
 ---
 
@@ -142,7 +138,8 @@ Se replicó la configuración del router principal modificando:
 
 Se observa el indicador **B (Backup)** en las tres interfaces VRRP.
 
-![VRRP Backup](./capturas/backup-vrrp.png)
+<img width="809" height="209" alt="image" src="https://github.com/user-attachments/assets/92fad5d2-4562-4e62-b620-ac13c20b73fb" />
+
 
 ---
 
@@ -150,15 +147,18 @@ Se observa el indicador **B (Backup)** en las tres interfaces VRRP.
 
 ### Cliente1
 
-![Cliente1 DHCP](./capturas/cliente1-dhcp.png)
+<img width="462" height="123" alt="image" src="https://github.com/user-attachments/assets/243cb403-c347-4e4e-9931-d304415ea616" />
+
 
 ### Cliente2
 
-![Cliente2 DHCP](./capturas/cliente2-dhcp.png)
+<img width="408" height="105" alt="image" src="https://github.com/user-attachments/assets/86721c05-10bf-4718-9dd9-0c7b665b9154" />
+
 
 ### Cliente3
 
-![Cliente3 DHCP](./capturas/cliente3-dhcp.png)
+<img width="420" height="140" alt="image" src="https://github.com/user-attachments/assets/afce401d-7a9c-4f44-a209-3ed08c55cbba" />
+
 
 ---
 
@@ -181,32 +181,23 @@ Posteriormente se apagó el router principal.
 
 ### Evidencia
 
-![Failover VRRP](./capturas/failover-vrrp.png)
+<img width="825" height="541" alt="image" src="https://github.com/user-attachments/assets/9e113403-3a8d-4f49-8bc5-ed1230a855e2" />
 
 ---
 
-## Resultados obtenidos
+### Backup asumiendo el rol de Master
 
-✅ VLAN 10 operativa
+Durante la prueba de failover se ejecutó un ping continuo hacia la dirección virtual VRRP (`10.10.10.1`) desde Cliente1 y posteriormente se apagó el router principal.
 
-✅ VLAN 20 operativa
+Tras la caída del router principal, se verificó el estado de las interfaces VRRP en el router de respaldo mediante el siguiente comando:
 
-✅ VLAN 30 operativa
+```routeros
+/interface vrrp print
+```
 
-✅ DHCP funcionando en todas las VLANs
+Se observa el indicador **RM (Running Master)** en las tres interfaces VRRP, confirmando que el router backup asumió correctamente el rol de master y continuó prestando el servicio de gateway utilizando las direcciones IP virtuales configuradas.
 
-✅ VRRP funcionando correctamente
+<img width="823" height="233" alt="image" src="https://github.com/user-attachments/assets/d527b8f7-aa52-4426-a992-6bef1557f86a" />
 
-✅ Conmutación automática ante falla del router principal
 
-✅ Alta disponibilidad del gateway mediante IP virtual compartida
-
----
-
-## Próximos pasos
-
-- Incorporar VLAN WAF.
-- Implementar Ubuntu Docker Guest.
-- Desplegar WAF mediante Docker.
-- Incorporar salida a Internet mediante NAT.
-- Validar acceso a servicios web protegidos.
+Este resultado demuestra el correcto funcionamiento del protocolo VRRP, permitiendo mantener la disponibilidad del servicio con una interrupción mínima durante la conmutación.
