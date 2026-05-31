@@ -27,14 +27,11 @@ Ubuntu Docker Guest
 
 Este nodo se utilizó para validar la conectividad entre la topología simulada y el entorno Docker.
 
-<img width="815" height="383" alt="image" src="https://github.com/user-attachments/assets/8420a6e6-54d9-4586-8c4d-e171dbb8bbf5" />
-
-
 ---
 
 ## 2. Conexión del Cloud
 
-Se agregó un nodo **Cloud** para conectar la topología GNS3 con la red Docker del host Ubuntu.
+Se agregó un nodo Cloud para conectar la topología GNS3 con la red Docker del host Ubuntu. El Cloud fue asociado al bridge Docker correspondiente a la red 172.18.0.0/16, permitiendo la comunicación entre GNS3 y los contenedores Docker.
 
 La conexión se realizó entre:
 
@@ -67,7 +64,7 @@ Verificación:
 ping 10.10.10.1
 ```
 
-Resultado esperado:
+Resultado:
 
 ```text
 64 bytes from 10.10.10.1
@@ -82,19 +79,11 @@ Resultado esperado:
 
 Desde el host Ubuntu se identificaron las IPs asignadas a los contenedores.
 
-```bash
-docker inspect backend-cliente1
-docker inspect backend-cliente2
-docker inspect tpn4-styr-main-bunkerweb-1
-```
+docker inspect backend-cliente1 | grep IPAddress
+docker inspect backend-cliente2 | grep IPAddress
+docker inspect tpn4-styr-main-bunkerweb-1 | grep IPAddress
 
-IPs obtenidas:
-
-| Servicio | Dirección IP |
-|-----------|-----------|
-| backend-cliente1 | 172.18.0.2 |
-| backend-cliente2 | 172.18.0.3 |
-| bunkerweb | 172.18.0.4 |
+<img width="821" height="211" alt="image" src="https://github.com/user-attachments/assets/2a39ef0a-37f2-4567-8628-b36798256702" />
 
 ---
 
@@ -112,6 +101,8 @@ Verificación:
 /ip address print
 ```
 
+<img width="541" height="288" alt="image" src="https://github.com/user-attachments/assets/be69910d-ff66-460e-b14c-84eed5d59a13" />
+
 ---
 
 ## 6. Validación de conectividad
@@ -122,7 +113,7 @@ Verificación:
 ping 172.18.0.1
 ```
 
-Resultado esperado:
+Resultado:
 
 ```text
 packet-loss=0%
@@ -158,7 +149,7 @@ Se verificó que MikroTik pudiera acceder al servicio HTTP publicado por BunkerW
 /tool fetch url="http://172.18.0.4"
 ```
 
-Resultado esperado:
+Resultado:
 
 ```text
 status: finished
@@ -167,16 +158,12 @@ code: 200
 
 <img width="882" height="165" alt="image" src="https://github.com/user-attachments/assets/a66eba4d-2750-44c0-a403-99d0a25e645b" />
 
-
 ---
 
----
 
-# 8. Validación del WAF
+## 8. Validación del WAF
 
 Una vez verificada la conectividad entre GNS3, Docker y BunkerWeb, se realizaron pruebas de seguridad para comprobar que el WAF inspeccionaba y bloqueaba solicitudes maliciosas antes de que alcanzaran el servidor protegido.
-
----
 
 ## Prueba de Cross-Site Scripting (XSS)
 
@@ -217,8 +204,18 @@ Resultado:
 ## Registro de Eventos
 
 Se verificó que los intentos de ataque quedaran registrados por ModSecurity y las reglas OWASP CRS integradas en BunkerWeb.
-
-Los registros mostraron la detección de las solicitudes maliciosas y la generación automática de respuestas HTTP 403.
+Los registros mostraron la detección de patrones asociados a ataques XSS mediante ModSecurity y las reglas OWASP CRS. Una vez identificada la solicitud maliciosa, BunkerWeb bloqueó el acceso devolviendo una respuesta HTTP 403 Forbidden.
 
 <img width="820" height="519" alt="image" src="https://github.com/user-attachments/assets/0ffad685-6847-45c2-8c3d-93d82dc0c111" />
 
+---
+
+## Resultado final
+
+La integración permitió conectar exitosamente la topología simulada en GNS3 con la red Docker donde se ejecuta BunkerWeb.
+
+Se verificó la conectividad entre MikroTik y los contenedores Docker, el acceso al servicio HTTP protegido y el correcto funcionamiento del WAF mediante pruebas de Cross-Site Scripting (XSS) y SQL Injection.
+
+Los ataques fueron detectados y bloqueados por ModSecurity utilizando las reglas OWASP CRS, generando respuestas HTTP 403 Forbidden y registrando los eventos para su posterior análisis.
+
+La implementación demostró la viabilidad de integrar herramientas de seguridad web dentro de entornos simulados de red utilizando GNS3 y Docker.
