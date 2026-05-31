@@ -8,21 +8,7 @@ El objetivo de esta implementación fue integrar la topología simulada en GNS3 
 
 ## Topología
 
-```text
-Cliente
-   │
-   ▼
-MikroTik
-   │
-   ▼
-Cloud GNS3
-   │
-   ▼
-Docker Network
-   │
-   ▼
-BunkerWeb
-```
+
 
 <img width="501" height="511" alt="image" src="https://github.com/user-attachments/assets/518c6311-34e5-489e-bfa2-53ccd84f98f8" />
 
